@@ -49,7 +49,12 @@ class ProductSeeder extends Seeder
         ];
 
         foreach ($products as $product) {
-            Product::create($product);
+            $name = $product['name'];
+            unset($product['name']);
+            Product::updateOrCreate(
+                ['name' => $name],
+                $product
+            );
         }
     }
 }
