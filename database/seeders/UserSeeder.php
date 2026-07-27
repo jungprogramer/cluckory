@@ -32,16 +32,6 @@ class UserSeeder extends Seeder
             ]
         );
 
-        User::updateOrCreate(
-            ['email' => 'admin3@cluckory.com'],
-            [
-                'name' => 'Admin 3',
-                'password' => Hash::make('password'),
-                'role' => 'admin',
-                'phone' => '081234567892',
-            ]
-        );
-
         // Regular User
         User::updateOrCreate(
             ['email' => 'user@cluckory.com'],
