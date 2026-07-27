@@ -21,6 +21,17 @@ class UserSeeder extends Seeder
             ]
         );
 
+        // Admin 2
+        User::updateOrCreate(
+            ['email' => 'admin2@cluckory.com'],
+            [
+                'name' => 'Admin 2',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'phone' => '081234567892',
+            ]
+        );
+
         // Regular User
         User::updateOrCreate(
             ['email' => 'user@cluckory.com'],
