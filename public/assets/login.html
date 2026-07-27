@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cluckory</title>
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="bg-gray-50 font-sans">
+
+    <header class="fixed top-0 w-full z-50 py-4 bg-white shadow">
+        <div class="max-w-7xl mx-auto px-6">
+            <span class="text-2xl font-black text-red-600 italic">
+                Cluckory
+            </span>
+        </div>
+    </header>
+
+    <main class="min-h-screen flex items-center justify-center p-6 pt-24">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 max-w-5xl w-full bg-white rounded-xl overflow-hidden shadow-lg">
+
+            <!-- Left Side -->
+            <div class="hidden md:flex items-center justify-center bg-red-600 text-white p-10">
+                <div>
+                    <h2 class="text-4xl font-bold mb-4">Taste the crunch.</h2>
+                    <p>Join thousands of foodies ordering from Cluckory every day.</p>
+                </div>
+            </div>
+
+            <!-- Form Side -->
+            <div class="p-8">
+
+                <h1 class="text-3xl font-bold mb-2">Welcome Back!</h1>
+                <p class="text-gray-500 mb-6">
+                    Log in to your account to start ordering.
+                </p>
+
+                <!-- GLOBAL ERROR -->
+                @if ($errors->any())
+                <div class="mb-4 p-3 bg-red-100 text-red-600 rounded">
+                    {{ $errors->first() }}
+                </div>
+                @endif
+
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+
+                    <!-- Email -->
+                    <div class="mb-4">
+                        <label class="block mb-2 font-semibold">Email</label>
+                        <input type="email" name="email" value="{{ old('email') }}" required autofocus
+                            class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-500"
+                            placeholder="name@example.com">
+                        @error('email')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-4">
+                        <div class="flex justify-between mb-2">
+                            <label class="font-semibold">Password</label>
+
+                            @if (Route::has('password.request'))
+                            <a href="{{ route('password.request') }}" class="text-sm text-red-600 hover:underline">
+                                Forgot password?
+                            </a>
+                            @endif
+                        </div>
+
+                        <input type="password" name="password" required
+                            class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-500"
+                            placeholder="••••••••">
+
+                        @error('password')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <!-- Remember -->
+                    <div class="mb-4 flex items-center">
+                        <input type="checkbox" name="remember" class="mr-2">
+                        <label class="text-sm text-gray-600">Remember Me</label>
+                    </div>
+
+                    <!-- Button -->
+                    <button type="submit"
+                        class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition">
+                        Login
+                    </button>
+
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-gray-500">
+                        Don't have an account?
+                        <a href="{{ route('register') }}" class="text-red-600 font-semibold hover:underline">
+                            Create an Account
+                        </a>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+</body>
+
+</html>
