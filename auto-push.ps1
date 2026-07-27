@@ -1,96 +1,57 @@
 # Auto Push Script - Cluckory
-# Script ini memantau perubahan file dan otomatis push ke GitHub
+# Script ini memantau perubahan via git status dan otomatis push ke GitHub
 
 $projectPath = "c:\laragon\www\cluckory"
-$debounceSeconds = 5  # Tunggu berapa detik setelah perubahan terakhir sebelum push
+$pollIntervalSeconds = 3  # Cek setiap 3 detik
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Auto Push Watcher - Cluckory" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Memantau perubahan di: $projectPath" -ForegroundColor Yellow
+Write-Host "Memantau: $projectPath" -ForegroundColor Yellow
 Write-Host "Tekan Ctrl+C untuk berhenti." -ForegroundColor Yellow
 Write-Host ""
 
-# Buat FileSystemWatcher
-$watcher = New-Object System.IO.FileSystemWatcher
-$watcher.Path = $projectPath
-$watcher.IncludeSubdirectories = $true
-$watcher.EnableRaisingEvents = $true
+Set-Location $projectPath
 
-# Filter file/folder yang diabaikan
-$ignoredPatterns = @(
-    '\.git',
-    'node_modules',
-    'vendor',
-    'storage\\framework',
-    'storage\\logs',
-    'bootstrap\\cache',
-    '\.env$',
-    '\.log$'
-)
-
-$lastChangeTime = [DateTime]::MinValue
-$timer = $null
-
-$action = {
-    $path = $Event.SourceEventArgs.FullPath
-    $changeType = $Event.SourceEventArgs.ChangeType
-
-    # Cek apakah file yang berubah termasuk yang diabaikan
-    foreach ($pattern in $using:ignoredPatterns) {
-        if ($path -match $pattern) { return }
-    }
-
-    $script:lastChangeTime = [DateTime]::Now
-    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Perubahan terdeteksi: $changeType - $path" -ForegroundColor DarkGray
-}
-
-# Daftarkan event handlers
-$handlers = @(
-    Register-ObjectEvent $watcher "Changed" -Action $action
-    Register-ObjectEvent $watcher "Created" -Action $action
-    Register-ObjectEvent $watcher "Deleted" -Action $action
-    Register-ObjectEvent $watcher "Renamed" -Action $action
-)
+$lastHash = ""
 
 try {
     while ($true) {
-        Start-Sleep -Seconds 1
+        Start-Sleep -Seconds $pollIntervalSeconds
 
-        if ($script:lastChangeTime -ne [DateTime]::MinValue) {
-            $secondsSinceChange = ([DateTime]::Now - $script:lastChangeTime).TotalSeconds
+        # Ambil status git sekarang
+        $currentStatus = git status --porcelain 2>$null
+        $currentHash = ($currentStatus | Out-String).Trim()
 
-            if ($secondsSinceChange -ge $debounceSeconds) {
-                $script:lastChangeTime = [DateTime]::MinValue
+        # Jika ada perubahan dan berbeda dari sebelumnya
+        if ($currentHash -ne "" -and $currentHash -ne $lastHash) {
+            $lastHash = $currentHash
 
-                Write-Host ""
+            Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Perubahan terdeteksi, menunggu selesai..." -ForegroundColor Yellow
+            Start-Sleep -Seconds 2  # Tunggu agar file selesai ditulis
+
+            # Re-check apakah masih ada perubahan
+            $finalStatus = (git status --porcelain 2>$null | Out-String).Trim()
+            if ($finalStatus -ne "") {
                 Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Memulai auto-push..." -ForegroundColor Green
 
-                Set-Location $projectPath
+                git add .
+                $commitMsg = "auto: update $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+                git commit -m $commitMsg
 
-                # Cek apakah ada perubahan
-                $status = git status --porcelain
-                if ($status) {
-                    $commitMsg = "auto: update $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-                    git add .
-                    git commit -m $commitMsg
+                if ($LASTEXITCODE -eq 0) {
                     git push origin main
-
                     if ($LASTEXITCODE -eq 0) {
                         Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Berhasil di-push ke GitHub!" -ForegroundColor Green
+                        $lastHash = ""  # Reset agar siap deteksi berikutnya
                     } else {
-                        Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Gagal push. Cek koneksi/autentikasi GitHub." -ForegroundColor Red
+                        Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Gagal push. Cek koneksi/auth GitHub." -ForegroundColor Red
                     }
-                } else {
-                    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Tidak ada perubahan untuk di-push." -ForegroundColor DarkGray
                 }
                 Write-Host ""
             }
         }
     }
 } finally {
-    # Cleanup saat script dihentikan
-    $handlers | ForEach-Object { Unregister-Event -SourceIdentifier $_.Name }
-    $watcher.Dispose()
     Write-Host "Auto Push Watcher dihentikan." -ForegroundColor Yellow
 }
