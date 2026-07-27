@@ -11,9 +11,9 @@ mkdir -p storage/framework/sessions storage/framework/views storage/framework/ca
 # Fix permissions
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
-# Run migrations and seed
-echo "==> Running Database Migrations & Seeding..."
-php artisan migrate --seed --force
+# Run migrations
+echo "==> Running Database Migrations..."
+php artisan migrate --force
 
 # Create storage symlink
 echo "==> Creating Storage Link..."
